@@ -1,38 +1,34 @@
-version: '3'
 services:
-  dst_caves:
-    container_name: dst_caves
-    image: mathielo/dst-dedicated-server:0.3.1
+
+  dst_master:
+    container_name: dst_master
+    image: sunwoo2539/dst-dedicated:v0.1.0
     ports:
-      - 10998:10998/udp
+      - 10999:10999/udp
+    volumes:
+      - ./DSTClusterConfig:/home/steam/.klei/DoNotStarveTogether/DSTWhalesCluster
+      - ./volumes/mods:/home/steam/server_dst/mods
+    environment:
+      - SHARD_NAME=Master
     networks:
       - dst_cluster
-    links:
-      - dst_master
+    stdin_open: true
+    tty: true
+
+  dst_caves:
+    container_name: dst_caves
+    image: sunwoo2539/dst-dedicated:v0.1.0
+    ports:
+      - 10998:10998/udp
     volumes:
       - ./DSTClusterConfig:/home/dst/.klei/DoNotStarveTogether/DSTWhalesCluster
       - ./volumes/mods:/home/dst/server_dst/mods
     environment:
       - SHARD_NAME=Caves
-
-  dst_master:
-    container_name: dst_master
-    image: mathielo/dst-dedicated-server:0.3.1
     networks:
       - dst_cluster
-    ports:
-      - 10999:10999/udp
-    volumes:
-      - ./DSTClusterConfig:/home/dst/.klei/DoNotStarveTogether/DSTWhalesCluster
-      - ./volumes/mods:/home/dst/server_dst/mods
-    environment:
-      - SHARD_NAME=Master
-
-    # These allow to stdin when attaching to the container via `docker attach`
-    # Any server commands should be sent to the master shard as it manages its slaves (Caves)
-    stdin_open: true
-    tty: true
+    links:
+      - dst_master
 
 networks:
   dst_cluster:
-

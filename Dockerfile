@@ -1,40 +1,31 @@
-FROM debian:latest
+FROM sunwoo2539/steamcmd-nonroot:debian-12
 
-MAINTAINER Caio Mathielo <mathielo@gmail.com>
+LABEL name="dont_starve_together-dedicated-docker"
+LABEL version="v0.1.0"
+LABEL description="Don't Starve Together dedicated server docker"
+LABEL repository="https://github.com/ParkSnoopy/dst-dedicated-docker.git"
+LABEL license="MIT"
+LABEL authors="[ ParkSnoopy <ParkSnoopy@users.noreply.github.com> ]"
 
-LABEL \
-    description="Don't Starve Together dedicated server" \
-    source="https://github.com/mathielo/dst-dedicated-server"
+USER root
+RUN \
+	apt update				&&\
+	apt upgrade -y				&&\
+	apt install -y --no-install-recommends	\
+		ca-certificates			\
+		lib32stdc++6			\
+		libcurl3-gnutls:i386		\
+		libcurl3-gnutls			&&\
+	rm -rf /var/lib/apt/lists/*
 
-# Create specific user to run DST server
-RUN useradd -ms /bin/bash/ dst
-WORKDIR /home/dst
+USER steam
+WORKDIR /home/steam
 
-# Install required packages
-RUN set -x && \
-    dpkg --add-architecture i386 && \
-    apt-get update && apt-get upgrade -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y wget ca-certificates lib32gcc1 lib32stdc++6 libcurl4-gnutls-dev:i386 && \
-    # Download Steam CMD (https://developer.valvesoftware.com/wiki/SteamCMD#Downloading_SteamCMD)
-    wget -q -O - "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf - && \
-    chown -R dst:dst ./ && \
-    # Cleanup
-    apt-get autoremove --purge -y wget && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN \
+	mkdir -p .klei/DoNotStarveTogether server_dst/mods
 
-USER dst
-RUN mkdir -p .klei/DoNotStarveTogether server_dst/mods
+VOLUME ["/home/steam/.klei/DoNotStarveTogether", "/home/steam/server_dst/mods"]
 
-# Install Don't Starve Together
-RUN ./steamcmd.sh \
-    +@ShutdownOnFailedCommand 1 \
-    +@NoPromptForPassword 1 \
-    +login anonymous \
-    +force_install_dir /home/dst/server_dst \
-    +app_update 343050 validate \
-    +quit
-
-VOLUME ["/home/dst/.klei/DoNotStarveTogether", "/home/dst/server_dst/mods"]
-
-COPY ["start-container-server.sh", "/home/dst/"]
-ENTRYPOINT ["/home/dst/start-container-server.sh"]
+##
+COPY ["start-container-server.sh", "/home/steam/"]
+ENTRYPOINT ["/home/steam/start-container-server.sh"]
